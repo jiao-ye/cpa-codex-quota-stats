@@ -49,3 +49,27 @@ These tests have not been executed locally for this publication task.
   to run tests and build the candidate before distribution.
 - Source review is not a dependency vulnerability audit or penetration test.
 - Candidate fixes are not deployed by this task. Production remains unchanged.
+
+## 0.22.0 Release Follow-Up
+
+The owner authorized public publication on 2026-10-07. Version 0.22.0 adds
+confirmed account-statistics deletion and uses independent public plugin ID
+`cpa-codex-quota-stats`. Migration retains the old SQLite format and requires
+unloading the legacy statistics library before using the same database.
+
+The deletion API requires a nonempty exact account ID and `confirm:true`;
+CPA management authentication still applies. Six active accounting tables
+are cleared in one transaction. Parameterized queries preserve other accounts,
+and a failed deletion rolls back all tables. Existing backups and inactive
+learning tables are not erased. New traffic can recreate the account.
+
+GitHub Actions run 37606207893 passed ordinary tests, race tests, vet and
+Linux amd64 CGO shared-library packaging for source commit
+`6056c20a17e67496abd3ab16af081f400467b249`. Added tests cover explicit
+confirmation, cross-account isolation, quoted account IDs, migration after
+deletion, rollback on failure and fresh usage after deletion.
+No browser verification was performed.
+
+Both source commits were checked by the disclosure guard before changing
+repository visibility. Public publication does not automatically add the
+plugin to CPA's default registry; the repository supplies its own public source.
