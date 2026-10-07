@@ -198,16 +198,27 @@ function renderAccountSummary(view) {
     target.textContent=view.accountError || tr('loading');
     return;
   }
-  const tokens=document.createElement('span');
-  tokens.className='account-total';
-  const amount=ledgerAmount(view.ledgerState.lifetime.total_tokens,'tokens');
-  tokens.title=amount.title;
-  tokens.append(document.createTextNode(amount.value));
-  const unit=document.createElement('span');
-  unit.className='accounting-unit';
-  unit.textContent=amount.unit;
-  tokens.append(unit);
-  target.append(tokens);
+  const totals=view.ledgerState.lifetime;
+  for (const [kind,value] of [['tokens',totals.total_tokens],['usd',totals.usd_reference]]) {
+    const metric=document.createElement('span');
+    metric.className='account-summary-metric account-summary-'+kind;
+    const label=document.createElement('span');
+    label.className='account-summary-label';
+    label.textContent=tr(kind);
+    const amount=ledgerAmount(value,kind);
+    const incomplete=kind==='usd' && Number(totals.usd_unpriced_requests)>0;
+    const number=document.createElement('span');
+    number.className='account-summary-number';
+    number.textContent=incomplete ? '-' : amount.value;
+    const unit=document.createElement('span');
+    unit.className='accounting-unit';
+    unit.textContent=amount.unit;
+    metric.title=incomplete ? lc('missing')+ledgerAmount(totals.usd_unpriced_requests,'requests').text :
+      amount.title+(kind==='usd' ? '; '+lc('reference') : '');
+    metric.dataset.incomplete=String(incomplete);
+    metric.append(label,number,unit);
+    target.append(metric);
+  }
   const observations=view.ledgerState.last_quota_observations || [];
   for (const scope of ['main','weekly']) {
     const reading=observations.find(q => q.scope===scope);
@@ -257,7 +268,9 @@ function createAccountView(account) {
   const root=$('#accountTemplate').content.firstElementChild.cloneNode(true);
   paintIcons(root);
   root.dataset.account=account;
-  root.querySelector('.account-name').textContent=account;
+  const name=root.querySelector('.account-name');
+  name.textContent=account;
+  name.title=account;
   const view={root,account,find:name => root.querySelector('[data-role="'+name+'"]'),
     ledgerState:null,ledgerLoading:true,ledgerOffset:0,ledgerEditID:0,ledgerGeneration:0,modelGeneration:0,
     modelRows:[],accountError:'',modelError:'',paymentBusy:false};

@@ -3,12 +3,14 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 CPA native plugin for recorded Codex usage, not quota predictions.
-Release: **0.22.0**. This fork uses its own CPA plugin ID and public plugin
+Release: **0.22.1**. This fork uses its own CPA plugin ID and public plugin
 source; it is not automatically included in CPA's default marketplace registry.
 
 ## Accounting
 
 - All-account totals and independently expandable account sections.
+- Collapsed account summaries show cumulative Tokens, recorded USD reference,
+  primary quota and weekly quota together.
 - Account statistics deletion with confirmation, leaving CPA credentials intact.
 - Cumulative requests, failures, Tokens and USD/Credits reference values.
 - Subscription intervals between manually entered actual payment dates.
@@ -81,15 +83,15 @@ Build on Linux amd64 with Go 1.22.12 and a C compiler:
 ```sh
 go test ./...
 go vet ./...
-make build VERSION=0.22.0
-make package VERSION=0.22.0
+make build VERSION=0.22.1
+make package VERSION=0.22.1
 ```
 
 CPA release assets:
 
-- `cpa-codex-quota-stats_0.22.0_linux_amd64.zip`
+- `cpa-codex-quota-stats_0.22.1_linux_amd64.zip`
 - `checksums.txt` containing the ZIP's SHA-256 hash
-- `plugin.json` describing version `0.22.0`, release tag `v0.22.0`
+- `plugin.json` describing version `0.22.1`, release tag `v0.22.1`
 
 The ZIP contains `cpa-codex-quota-stats.so` at its root. Verify its checksum before
 installation. Use SQLite's online backup API while WAL is active; copying only

@@ -23,3 +23,5 @@ jobs:
           node --check web/accounting.js
           node --check tools/audit-staged.cjs
           bash -n package-release.sh
+      - name: Check account summary formatting
+        run: node --test tools/account-summary.test.cjs

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.22.1
+
+- Show recorded cumulative USD reference next to Tokens in collapsed account
+  summaries. Missing rates show an unavailable value instead of a complete total.
+- Replace blue account names and avatars with neutral charcoal and gray.
+- Refine compact summary columns, metric hierarchy, table spacing, status badges,
+  form controls and dialogs across desktop and mobile.
+- Preserve all accounting data, quota observations and management API behavior.
+
 ## 0.22.0
 
 - Add confirmed account-statistics deletion through the dashboard and protected

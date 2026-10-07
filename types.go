@@ -12,7 +12,7 @@ const (
 	pluginName = "Codex Quota Statistics"
 )
 
-var pluginVersion = "0.22.0"
+var pluginVersion = "0.22.1"
 
 type envelope struct {
 	OK     bool            `json:"ok"`

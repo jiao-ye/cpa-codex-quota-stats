@@ -3,12 +3,13 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 用于 CPA 的 Codex 实际用量统计插件，不包含预测功能。
-发布版本：**0.22.0**。使用独立插件 ID 和公开插件源；
+发布版本：**0.22.1**。使用独立插件 ID 和公开插件源；
 不会因公开仓库就自动进入 CPA 的默认插件源。
 
 ## 统计内容
 
 - 总账号使用额度，各账号可单独展开、收起。
+- 收起栏同时显示累计 Tokens、美元参考值、主额度和周额度。
 - 可二次确认删除账号统计，不删除 CPA 登录凭据。
 - 累计请求、失败数、Tokens 和 USD/Credits 参考值。
 - 按手动录入的真实付款日期划分订阅区间。
@@ -72,15 +73,15 @@ https://raw.githubusercontent.com/jiao-ye/cpa-codex-quota-stats/main/registry.js
 ```sh
 go test ./...
 go vet ./...
-make build VERSION=0.22.0
-make package VERSION=0.22.0
+make build VERSION=0.22.1
+make package VERSION=0.22.1
 ```
 
 符合 CPA 安装约定的产物：
 
-- `cpa-codex-quota-stats_0.22.0_linux_amd64.zip`
+- `cpa-codex-quota-stats_0.22.1_linux_amd64.zip`
 - `checksums.txt`：ZIP 的 SHA-256
-- `plugin.json`：版本 `0.22.0`，Release 标签 `v0.22.0`
+- `plugin.json`：版本 `0.22.1`，Release 标签 `v0.22.1`
 
 ZIP 根目录包含 `cpa-codex-quota-stats.so`。安装前核对校验值。
 SQLite 开启 WAL 时应使用在线备份接口，不能只复制主数据库文件。

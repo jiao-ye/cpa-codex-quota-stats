@@ -6,7 +6,7 @@ on:
       version:
         description: Version matching source and plugin manifest
         required: true
-        default: '0.22.0'
+        default: '0.22.1'
 
 permissions:
   contents: write
@@ -46,6 +46,7 @@ jobs:
           cache: true
       - name: Test and vet
         run: |
+          node --test tools/account-summary.test.cjs
           go test -timeout 10m ./...
           go test -race -timeout 15m ./...
           go vet ./...
@@ -61,4 +62,4 @@ jobs:
             dist/checksums.txt plugin.json \
             --target "${GITHUB_SHA}" --draft \
             --title "Codex Quota Statistics ${PLUGIN_VERSION}" \
-            --notes "CPA Codex usage statistics. Native ABI v1, Linux amd64. Account statistics deletion and updated account colors. No server deployment."
+            --notes-file CHANGELOG.md

@@ -6,7 +6,7 @@
       "name": "Codex Quota Statistics",
       "description": "Passive CPA usage accounting with cumulative, payment-period and reset-period ledgers. No forecasting.",
       "author": "jiao-ye (based on Autsunset)",
-      "version": "0.22.0",
+      "version": "0.22.1",
       "repository": "https://github.com/jiao-ye/cpa-codex-quota-stats",
       "homepage": "https://github.com/jiao-ye/cpa-codex-quota-stats",
       "license": "MIT",
