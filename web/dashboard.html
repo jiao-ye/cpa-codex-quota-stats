@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Codex 额度统计</title>
+<style>/*__STATS_STYLE__*/</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><span class="brand-mark" data-icon="chart-no-axes-combined" aria-hidden="true"></span><h1 id="title">Codex 额度统计</h1></div>
+    <div class="toolbar">
+      <select id="language" aria-label="Language"><option value="zh-CN">中文</option><option value="en">English</option></select>
+      <button id="refresh" class="icon-button" data-icon="refresh-cw" type="button" title="刷新" aria-label="刷新"></button>
+      <button id="logout" class="icon-button" data-icon="log-out" type="button" title="退出认证" aria-label="退出认证"></button>
+    </div>
+  </header>
+  <p id="status" role="status"></p>
+  <section id="allAccountsUsage" class="accounting-section" aria-labelledby="allAccountsTitle">
+    <h2 id="allAccountsTitle">所有账号总使用</h2>
+    <dl id="allAccountsMetrics" class="accounting-metrics"></dl>
+    <p id="allAccountsStatus" class="accounting-error" role="status" hidden></p>
+  </section>
+  <div class="accounts-heading"><h2 id="accountsTitle">账号</h2><span id="accountsCount" class="account-count"></span></div>
+  <div id="accounts"></div>
+  <p id="accountsEmpty" hidden></p>
+  <footer id="version"></footer>
+</main>
+<template id="accountTemplate">
+<details class="account-section">
+  <summary class="account-summary">
+    <span class="account-identity"><span class="account-avatar" data-icon="user-round" aria-hidden="true"></span><span class="account-name"></span></span>
+    <span class="account-overview"></span>
+    <span class="account-chevron" data-icon="chevron-down" aria-hidden="true"></span>
+  </summary>
+  <div class="account-content">
+  <p data-role="accountError" class="accounting-error" role="alert"></p>
+  <h2 data-role="usageTitle" class="account-page-title">用量统计</h2>
+  <section data-role="wbPanelUsage" role="region">
+    <div data-role="ledgerTables"></div>
+    <section class="data-section">
+      <div class="section-head"><h2 data-role="modelsTitle">实际模型用量</h2><select data-role="days" aria-label="统计范围"><option value="1">近 24 小时</option><option value="7" selected>近 7 天</option><option value="30">近 30 天</option></select></div>
+      <p data-role="modelError" class="accounting-error" role="alert"></p>
+      <div class="accounting-scroll"><table class="accounting-table">
+        <thead data-role="modelHeads"></thead><tbody data-role="modelRows"></tbody>
+      </table></div>
+    </section>
+  </section>
+  </div>
+</details>
+</template>
+<dialog id="login">
+  <form id="loginForm">
+    <h2 id="loginTitle">CPA 管理认证</h2>
+    <label id="keyLabel" for="managementKey">Management Key</label>
+    <input id="managementKey" type="password" autocomplete="current-password" required>
+    <p class="accounting-error" id="loginError" role="alert"></p>
+    <button id="connect" type="submit">连接</button>
+  </form>
+</dialog>
+<script>//__STATS_SCRIPT__</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+name: Private Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version matching source and plugin manifest
+        required: true
+        default: '0.21.4'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event.repository.private == true && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    env:
+      PLUGIN_VERSION: ${{ inputs.version }}
+      CGO_ENABLED: '1'
+      GOOS: linux
+      GOARCH: amd64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Audit source and validate release metadata
+        run: |
+          node tools/audit-staged.cjs
+          node <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('plugin.json', 'utf8'));
+          const registry = JSON.parse(fs.readFileSync('registry.json', 'utf8')).plugins[0];
+          const source = fs.readFileSync('types.go', 'utf8').match(/var pluginVersion = "([^"]+)"/)?.[1];
+          const version = process.env.PLUGIN_VERSION;
+          if (!/^\d+\.\d+\.\d+$/.test(version) || manifest.version !== version ||
+              source !== version || registry.version !== version ||
+              manifest.release_tag !== 'v' + version || registry.auth_required !== true ||
+              manifest.id !== registry.id || manifest.repository !== registry.repository) {
+            throw new Error('Source, registry and manifest must agree on release metadata');
+          }
+          NODE
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: '1.22.12'
+          cache: true
+      - name: Test and vet
+        run: |
+          go test ./...
+          go test -race ./...
+          go vet ./...
+      - name: Package CPA assets
+        run: bash package-release.sh dist
+      - name: Create private draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "v${PLUGIN_VERSION}" \
+            "dist/cpa-quota-estimator_${PLUGIN_VERSION}_linux_amd64.zip" \
+            dist/checksums.txt plugin.json \
+            --target "${GITHUB_SHA}" --draft \
+            --title "Codex Quota Statistics ${PLUGIN_VERSION}" \
+            --notes "Private source candidate. Native CPA ABI v1, Linux amd64. No server deployment."

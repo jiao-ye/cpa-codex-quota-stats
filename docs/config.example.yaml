@@ -1,0 +1,16 @@
+# Merge these fields into your own CPA configuration; this is not a full config.
+plugins:
+  enabled: true
+  dir: plugins
+  configs:
+    cpa-quota-estimator:
+      enabled: true
+      data_path: ./data/cpa-quota-estimator.sqlite
+      sample_interval_minutes: 5
+      capture_codex_headers: false
+      history_days: 365
+
+# CPA v8 grouped configuration:
+observability:
+  usage:
+    usage-statistics-enabled: true
