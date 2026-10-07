@@ -3,7 +3,7 @@ plugins:
   enabled: true
   dir: plugins
   configs:
-    cpa-quota-estimator:
+    cpa-codex-quota-stats:
       enabled: true
       data_path: ./data/cpa-quota-estimator.sqlite
       sample_interval_minutes: 5

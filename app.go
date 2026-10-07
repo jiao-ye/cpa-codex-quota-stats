@@ -91,6 +91,7 @@ func managementRegistration() any {
 			{"Method": "GET", "Path": base + "/accounting"},
 			{"Method": "POST", "Path": base + "/subscriptions"},
 			{"Method": "DELETE", "Path": base + "/subscriptions"},
+			{"Method": "DELETE", "Path": base + "/accounts"},
 		},
 		"resources": []map[string]any{{"Path": "/dashboard", "Menu": "Codex 额度统计", "Description": "累计使用、实际订阅区间和已观测重置周期用量。"}},
 	}

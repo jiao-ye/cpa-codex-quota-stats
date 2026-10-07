@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-plugin_id="cpa-quota-estimator"
+plugin_id="cpa-codex-quota-stats"
 out_dir="${1:-dist}"
 version="${PLUGIN_VERSION:-}"
 

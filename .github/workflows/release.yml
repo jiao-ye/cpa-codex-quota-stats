@@ -1,4 +1,4 @@
-name: Private Release
+name: Release
 
 on:
   workflow_dispatch:
@@ -6,14 +6,14 @@ on:
       version:
         description: Version matching source and plugin manifest
         required: true
-        default: '0.21.4'
+        default: '0.22.0'
 
 permissions:
   contents: write
 
 jobs:
   release:
-    if: github.event.repository.private == true && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
     env:
       PLUGIN_VERSION: ${{ inputs.version }}
@@ -35,7 +35,7 @@ jobs:
           const version = process.env.PLUGIN_VERSION;
           if (!/^\d+\.\d+\.\d+$/.test(version) || manifest.version !== version ||
               source !== version || registry.version !== version ||
-              manifest.release_tag !== 'v' + version || registry.auth_required !== true ||
+              manifest.release_tag !== 'v' + version || registry.auth_required !== false ||
               manifest.id !== registry.id || manifest.repository !== registry.repository) {
             throw new Error('Source, registry and manifest must agree on release metadata');
           }
@@ -46,19 +46,19 @@ jobs:
           cache: true
       - name: Test and vet
         run: |
-          go test ./...
-          go test -race ./...
+          go test -timeout 10m ./...
+          go test -race -timeout 15m ./...
           go vet ./...
       - name: Package CPA assets
         run: bash package-release.sh dist
-      - name: Create private draft release
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           gh release create "v${PLUGIN_VERSION}" \
-            "dist/cpa-quota-estimator_${PLUGIN_VERSION}_linux_amd64.zip" \
+            "dist/cpa-codex-quota-stats_${PLUGIN_VERSION}_linux_amd64.zip" \
             dist/checksums.txt plugin.json \
             --target "${GITHUB_SHA}" --draft \
             --title "Codex Quota Statistics ${PLUGIN_VERSION}" \
-            --notes "Private source candidate. Native CPA ABI v1, Linux amd64. No server deployment."
+            --notes "CPA Codex usage statistics. Native ABI v1, Linux amd64. Account statistics deletion and updated account colors. No server deployment."

@@ -3,12 +3,13 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 CPA native plugin for recorded Codex usage, not quota predictions.
-Publication candidate: **0.21.4**. Keep this repository **private** until
-explicitly approved for publication. No public marketplace submission is made.
+Release: **0.22.0**. This fork uses its own CPA plugin ID and public plugin
+source; it is not automatically included in CPA's default marketplace registry.
 
 ## Accounting
 
 - All-account totals and independently expandable account sections.
+- Account statistics deletion with confirmation, leaving CPA credentials intact.
 - Cumulative requests, failures, Tokens and USD/Credits reference values.
 - Subscription intervals between manually entered actual payment dates.
 - Separate monthly subscription, weekly and five-hour ledgers, newest first,
@@ -27,8 +28,9 @@ cannot be reconstructed; first quota observations can be partial baselines.
 
 ## CPA Integration
 
-Plugin ID remains `cpa-quota-estimator` to preserve existing database/config
-compatibility. Do not load this fork and the original plugin together.
+Plugin ID is `cpa-codex-quota-stats`, distinct from the original estimator.
+Do not load this fork and an old statistics/estimator binary together against
+the same SQLite file. Existing database schemas are retained.
 The integration baseline is CPA **8.0.16**, Linux amd64, native ABI v1.
 Other CPA versions and platforms require separate verification.
 
@@ -36,12 +38,12 @@ Merge [docs/config.example.yaml](docs/config.example.yaml) into your CPA
 configuration. Preserve the existing `data_path` on upgrades. The example is
 not a complete CPA config and deliberately contains no host or credential.
 
-Dashboard: `/v0/resource/plugins/cpa-quota-estimator/dashboard`.
+Dashboard: `/v0/resource/plugins/cpa-codex-quota-stats/dashboard`.
 It is a public static resource; account data is fetched only through CPA's
 authenticated management API. Use your existing HTTPS management entry.
 The same-origin management-panel authorization bridge is supported.
 
-Routes under `/v0/management/cpa-quota-estimator`:
+Routes under `/v0/management/cpa-codex-quota-stats`:
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -50,47 +52,64 @@ Routes under `/v0/management/cpa-quota-estimator`:
 | GET | `/usage?account=<AuthID>&days=7` | Actual model/tier usage |
 | POST | `/subscriptions` | Add/edit `{id,account,paid_at,amount_usd}` |
 | DELETE | `/subscriptions` | Delete `{account,id}` |
+| DELETE | `/accounts` | Delete active statistics for `{account,confirm:true}` |
 
 Payment timestamps are Unix seconds. Dashboard dates use Asia/Shanghai.
 Missing rate conversions are marked rather than inferred from quota usage.
 
-## Private Installation And Release
+## Marketplace Installation And Release
 
-`plugin.json` supplies the plugin manifest; `registry.json` is a CPA plugin
-source entry with `auth_required: true`. Private GitHub access is required for
-the registry, repository metadata and release downloads. That field does not
-provide credentials. Configure authenticated access supported by your CPA
-version, or download the release with GitHub authentication and install locally.
-Never paste GitHub credentials into these files or public URLs.
+In CPA's plugin market, add this public plugin source and refresh:
+
+```text
+https://raw.githubusercontent.com/jiao-ye/cpa-codex-quota-stats/main/registry.json
+```
+
+Select **Codex Quota Statistics** from this source and install.
+`plugin.json` supplies the manifest; `registry.json` marks the source entry
+`auth_required: false`. No GitHub credential is needed for public downloads,
+subject to normal GitHub API rate limits.
+
+When migrating from `cpa-quota-estimator`, back up the database, unload/remove
+the old library, and configure the new ID's `data_path` to the **existing**
+SQLite file. The included example keeps the legacy file basename for this
+purpose. An empty path elsewhere creates an independent ledger, not a data
+migration. CPA may require a restart to load/unload native libraries.
 
 Build on Linux amd64 with Go 1.22.12 and a C compiler:
 
 ```sh
 go test ./...
 go vet ./...
-make build VERSION=0.21.4
-make package VERSION=0.21.4
+make build VERSION=0.22.0
+make package VERSION=0.22.0
 ```
 
 CPA release assets:
 
-- `cpa-quota-estimator_0.21.4_linux_amd64.zip`
+- `cpa-codex-quota-stats_0.22.0_linux_amd64.zip`
 - `checksums.txt` containing the ZIP's SHA-256 hash
-- `plugin.json` describing version `0.21.4`, release tag `v0.21.4`
+- `plugin.json` describing version `0.22.0`, release tag `v0.22.0`
 
-The ZIP contains `cpa-quota-estimator.so` at its root. Verify its checksum before
+The ZIP contains `cpa-codex-quota-stats.so` at its root. Verify its checksum before
 installation. Use SQLite's online backup API while WAL is active; copying only
 the main database file can lose recent transactions. Replace the plugin through
 your normal CPA maintenance procedure, preserving data and a rollback copy.
 This repository contains no remote-host deployment automation or credentials.
 
-The **Private Release** GitHub workflow is manual-only. It runs tests and
-packages Linux amd64 assets, then creates a **draft** release in the private
-repository. It does not deploy or submit to a marketplace. CI performs only
-source-disclosure and syntax checks. Until the manual workflow passes, the
-0.21.4 candidate's runtime changes are not functionally verified.
+The **Release** GitHub workflow is manual-only. It runs tests, race tests and
+vet, packages Linux amd64 assets, then creates a **draft** release.
+It does not deploy or submit to the default marketplace. CI performs only
+source-disclosure and syntax checks. Review the successful workflow and release
+assets before publishing the draft.
 CPA's release discovery requires a published release; a draft is not installable
 through normal plugin-store discovery until the owner explicitly publishes it.
+
+Account deletion atomically removes this plugin's raw usage, archived usage,
+quota samples/cycles, payment records and lifetime totals for the selected
+account. It is irreversible in the current database. Backups and inert legacy
+learning tables are not scrubbed. Later traffic starts a new ledger. Deletion
+does not revoke CPA credentials or stop that account from serving requests.
 
 ## Privacy And Attribution
 

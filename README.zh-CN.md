@@ -3,11 +3,13 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 用于 CPA 的 Codex 实际用量统计插件，不包含预测功能。
-待发布版本：**0.21.4**。仓库暂时保持**私有**，不提交公共插件市场。
+发布版本：**0.22.0**。使用独立插件 ID 和公开插件源；
+不会因公开仓库就自动进入 CPA 的默认插件源。
 
 ## 统计内容
 
 - 总账号使用额度，各账号可单独展开、收起。
+- 可二次确认删除账号统计，不删除 CPA 登录凭据。
 - 累计请求、失败数、Tokens 和 USD/Credits 参考值。
 - 按手动录入的真实付款日期划分订阅区间。
 - 分开的月账本、周账本、五小时账本，最新在前，显示进行中状态。
@@ -22,19 +24,20 @@ USD/Credits 是按 token 单价换算的**参考值，不是实际扣费或订�
 
 ## 接入 CPA
 
-插件 ID 保持为 `cpa-quota-estimator`，以兼容原有配置与数据库。
-不要同时加载本插件与原插件。已有接入基线为 **CPA 8.0.16 / Linux amd64 /
+公开版插件 ID 为 `cpa-codex-quota-stats`，与原作者预测插件区分。
+保留已有数据库格式；不要让本插件和旧统计版/原插件同时读写同一数据库。
+已有接入基线为 **CPA 8.0.16 / Linux amd64 /
 原生 ABI v1**；其他版本和平台需要另行验证。
 
 将 [docs/config.example.yaml](docs/config.example.yaml) 的相关字段合并到
 现有 CPA 配置，升级时保留原 `data_path`。示例不含真实主机或凭据，
 也不是可直接替换现有配置的完整文件。
 
-页面路径：`/v0/resource/plugins/cpa-quota-estimator/dashboard`。
+页面路径：`/v0/resource/plugins/cpa-codex-quota-stats/dashboard`。
 该路径仅提供静态页面，真实数据通过 CPA 已认证的管理 API 获取。
 继续使用原有 HTTPS 管理入口，支持同源管理面板授权桥接。
 
-管理 API 前缀：`/v0/management/cpa-quota-estimator`。
+管理 API 前缀：`/v0/management/cpa-codex-quota-stats`。
 
 | 方法 | 路径 | 内容 |
 | --- | --- | --- |
@@ -43,43 +46,56 @@ USD/Credits 是按 token 单价换算的**参考值，不是实际扣费或订�
 | GET | `/usage?account=<AuthID>&days=7` | 实际模型用量 |
 | POST | `/subscriptions` | 新增或编辑 `{id,account,paid_at,amount_usd}` |
 | DELETE | `/subscriptions` | 删除 `{account,id}` |
+| DELETE | `/accounts` | 清理账号统计 `{account,confirm:true}` |
 
 付款时间使用 Unix 秒，页面日期使用 Asia/Shanghai。
 未知单价显示缺失，不根据额度消耗推算价格。
 
-## 私有安装与发布
+## 插件市场安装与发布
 
-`plugin.json` 提供插件清单，`registry.json` 是 CPA 插件源条目，
-并声明 `auth_required: true`。私有仓库的索引、仓库信息和 Release 下载
-都需要 GitHub 认证；这个标记本身不提供凭据。按当前 CPA 版本支持的方式
-配置认证，或先通过 GitHub 认证下载产物，再本地安装。
-不要将令牌写入清单、索引或公开 URL。
+在 CPA 插件市场添加以下公开插件源，刷新后选择 **Codex Quota Statistics**：
+
+```text
+https://raw.githubusercontent.com/jiao-ye/cpa-codex-quota-stats/main/registry.json
+```
+
+`plugin.json` 提供插件清单，`registry.json` 声明 `auth_required: false`。
+公开下载不需要 GitHub 令牌，但仍受 GitHub API 的正常限流约束。
+
+从旧 `cpa-quota-estimator` 迁移时，先备份数据库、卸载旧动态库，再将新插件
+配置中的 `data_path` 指向**原 SQLite 文件**。示例保留旧数据库文件名以便迁移。
+指向别的新路径会产生独立空账本，不会自动迁移记录。加载或卸载原生动态库
+可能需要 CPA 重启；不要同时加载新旧插件。
 
 在 Linux amd64、Go 1.22.12、具备 C 编译器的环境中构建：
 
 ```sh
 go test ./...
 go vet ./...
-make build VERSION=0.21.4
-make package VERSION=0.21.4
+make build VERSION=0.22.0
+make package VERSION=0.22.0
 ```
 
 符合 CPA 安装约定的产物：
 
-- `cpa-quota-estimator_0.21.4_linux_amd64.zip`
+- `cpa-codex-quota-stats_0.22.0_linux_amd64.zip`
 - `checksums.txt`：ZIP 的 SHA-256
-- `plugin.json`：版本 `0.21.4`，Release 标签 `v0.21.4`
+- `plugin.json`：版本 `0.22.0`，Release 标签 `v0.22.0`
 
-ZIP 根目录包含 `cpa-quota-estimator.so`。安装前核对校验值。
+ZIP 根目录包含 `cpa-codex-quota-stats.so`。安装前核对校验值。
 SQLite 开启 WAL 时应使用在线备份接口，不能只复制主数据库文件。
 通过正常 CPA 维护流程更新插件，保留数据和回滚副本。
 本仓库不包含远程部署脚本、服务器地址或部署密钥。
 
-GitHub 的 **Private Release** 工作流仅手动触发，执行测试、打包 Linux amd64
-并创建私有仓库内的**草稿 Release**，不部署、不上架。普通 CI 只做上传内容
-检查和语法检查。手动工作流通过前，0.21.4 的运行时改动尚未完成功能验证。
+GitHub 的 **Release** 工作流仅手动触发，执行测试、竞态测试、vet 和 Linux amd64
+打包，生成**草稿 Release**，不部署、不提交默认市场。普通 CI 只做上传内容
+检查和语法检查；审核成功的工作流与产物后再发布草稿。
 CPA 的常规插件市场发现要求已发布的 Release；草稿不会被自动发现，
 需由仓库所有者明确发布后才能通过该方式安装。
+
+账号删除在一个事务内清理当前插件的原始请求、归档用量、额度样本、重置周期、
+付款记录和累计账本，不能撤销。不清理备份及停用的历史学习表。
+后续经过 CPA 的请求会重新开始统计；不会注销账号凭据，也不会停止该账号服务。
 
 ## 隐私与来源
 

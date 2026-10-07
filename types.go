@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	pluginID   = "cpa-quota-estimator"
+	pluginID   = "cpa-codex-quota-stats"
 	pluginName = "Codex Quota Statistics"
 )
 
-var pluginVersion = "0.21.4"
+var pluginVersion = "0.22.0"
 
 type envelope struct {
 	OK     bool            `json:"ok"`

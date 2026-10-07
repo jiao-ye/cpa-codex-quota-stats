@@ -32,7 +32,10 @@
   <summary class="account-summary">
     <span class="account-identity"><span class="account-avatar" data-icon="user-round" aria-hidden="true"></span><span class="account-name"></span></span>
     <span class="account-overview"></span>
-    <span class="account-chevron" data-icon="chevron-down" aria-hidden="true"></span>
+    <span class="account-actions">
+      <button class="icon-button account-delete" data-role="deleteAccount" data-icon="trash-2" type="button" title="删除账号统计" aria-label="删除账号统计"></button>
+      <span class="account-chevron" data-icon="chevron-down" aria-hidden="true"></span>
+    </span>
   </summary>
   <div class="account-content">
   <p data-role="accountError" class="accounting-error" role="alert"></p>
@@ -50,6 +53,16 @@
   </div>
 </details>
 </template>
+<dialog id="deleteAccountDialog" aria-labelledby="deleteAccountTitle" aria-describedby="deleteAccountMessage">
+  <h2 id="deleteAccountTitle">删除账号统计</h2>
+  <p id="deleteAccountName" class="delete-account-name"></p>
+  <p id="deleteAccountMessage"></p>
+  <p id="deleteAccountError" class="accounting-error" role="alert"></p>
+  <div class="dialog-actions">
+    <button id="cancelAccountDelete" type="button">取消</button>
+    <button id="confirmAccountDelete" class="danger-button" type="button" data-icon="trash-2">删除</button>
+  </div>
+</dialog>
 <dialog id="login">
   <form id="loginForm">
     <h2 id="loginTitle">CPA 管理认证</h2>

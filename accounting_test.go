@@ -333,17 +333,17 @@ func TestAccountingManagementRoutes(t *testing.T) {
 	s := auditStore(t)
 	a := &app{store: s, cfg: defaultConfig()}
 	for _, route := range []string{"/accounting", "/subscriptions"} {
-		response := a.handleManagement(managementRequest{Method: "PATCH", Path: "/cpa-quota-estimator" + route, Query: url.Values{"account": {"a"}}})
+		response := a.handleManagement(managementRequest{Method: "PATCH", Path: "/" + pluginID + route, Query: url.Values{"account": {"a"}}})
 		if route == "/accounting" && response.StatusCode != 405 {
 			t.Fatalf("method status=%d", response.StatusCode)
 		}
 	}
 	payment, _ := json.Marshal(subscriptionPayment{Account: "a", PaidAt: time.Now().Unix(), Amount: 20})
-	response := a.handleManagement(managementRequest{Method: "POST", Path: "/cpa-quota-estimator/subscriptions", Body: payment})
+	response := a.handleManagement(managementRequest{Method: "POST", Path: "/" + pluginID + "/subscriptions", Body: payment})
 	if response.StatusCode != 200 {
 		t.Fatalf("save: %s", response.Body)
 	}
-	response = a.handleManagement(managementRequest{Method: "GET", Path: "/cpa-quota-estimator/accounting", Query: url.Values{"account": {"a"}}})
+	response = a.handleManagement(managementRequest{Method: "GET", Path: "/" + pluginID + "/accounting", Query: url.Values{"account": {"a"}}})
 	if response.StatusCode != 200 {
 		t.Fatalf("accounting: %s", response.Body)
 	}

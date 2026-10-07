@@ -41,7 +41,7 @@ func (a *app) handleManagement(req managementRequest) managementResponse {
 		}, Body: dashboardHTML}
 	}
 	path := strings.TrimPrefix(strings.TrimPrefix(req.Path, "/v0/management"), "/"+pluginID)
-	if path != "/overview" && path != "/usage" && path != "/accounting" && path != "/subscriptions" {
+	if path != "/overview" && path != "/usage" && path != "/accounting" && path != "/subscriptions" && path != "/accounts" {
 		return textResponse(404, "not found")
 	}
 	a.mu.Lock()
@@ -51,6 +51,22 @@ func (a *app) handleManagement(req managementRequest) managementResponse {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+	if path == "/accounts" {
+		if req.Method != "DELETE" {
+			return textResponse(405, "method not allowed")
+		}
+		var request struct {
+			Account string `json:"account"`
+			Confirm bool   `json:"confirm"`
+		}
+		if err := json.Unmarshal(req.Body, &request); err != nil || strings.TrimSpace(request.Account) == "" || !request.Confirm {
+			return textResponse(400, "account and explicit confirmation are required")
+		}
+		if err := a.store.deleteAccount(ctx, request.Account); err != nil {
+			return textResponse(500, "could not delete account statistics")
+		}
+		return jsonResponse(200, map[string]bool{"ok": true})
+	}
 	if path == "/subscriptions" {
 		if req.Method != "POST" && req.Method != "DELETE" {
 			return textResponse(405, "method not allowed")

@@ -1,7 +1,8 @@
 # Security And Privacy
 
-This repository is private. Do not change its visibility or submit its registry
-to a public marketplace without explicit owner approval.
+The owner authorized public source publication on 2026-10-07.
+Public source and release assets must not include runtime databases,
+operational reports, credentials or account screenshots.
 
 ## Sensitive Data
 
@@ -34,6 +35,11 @@ for price data, with a plugin/version User-Agent and no account or usage body.
 Network address, request timing and plugin version remain observable there.
 Administrators control any configured price-source URL and egress policy.
 The project does not add analytics, telemetry or external icon/CDN requests.
+
+Account-statistics deletion requires authenticated CPA management access and
+explicit confirmation. It does not delete CPA credentials. It removes active
+accounting tables, not old backups or inert historical learning tables; it is
+not a comprehensive data-erasure mechanism.
 
 ## Publication Guard
 

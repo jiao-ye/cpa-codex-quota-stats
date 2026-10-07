@@ -7,7 +7,9 @@ const accountViews = new Map();
 let nextViewID = 0;
 let bridgeState = 'unknown';
 const bridgePending = new Map();
-const base = '/v0/management/cpa-quota-estimator';
+const base = '/v0/management/cpa-codex-quota-stats';
+let deletingView = null;
+let accountDeleteBusy = false;
 const copy = {
   'zh-CN': {title:'Codex 额度统计',usage:'用量统计',models:'实际模型用量',allAccounts:'所有账号总使用',totalUnavailable:'部分账号读取失败，暂无法汇总总使用量',
     account:'账号',pool:'额度池',used:'上游已用 %',at:'观测时间',reset:'上游重置时间',state:'观测状态',old:'已过重置时间，等待新观测',recorded:'已记录',
@@ -15,6 +17,8 @@ const copy = {
     tokens:'实际 Tokens',usd:'美元参考值',credits:'Credits 参考值',none:'暂无记录',refresh:'刷新',logout:'退出认证',
     login:'CPA 管理认证',connect:'连接',auth:'请输入有效的 CPA Management Key',loading:'读取中',http:'请通过 HTTPS 管理入口连接',
     expand:'展开账号额度',collapse:'收起账号额度',noAccounts:'暂无账号',main:'主额度',weekly:'周额度',range:'统计范围',unavailable:'尚无观测',
+    deleteAccount:'删除账号统计',deleteConfirm:'删除',cancelDelete:'取消',deleting:'删除中',
+    deleteMessage:'将删除该账号的累计用量、付款记录和重置账本，无法撤销。CPA 登录凭据不会删除；后续请求会重新开始统计。',
     days:['近 24 小时','近 7 天','近 30 天']},
   en: {title:'Codex Quota Statistics',usage:'Usage',models:'Actual model usage',allAccounts:'Total usage across all accounts',totalUnavailable:'Some accounts failed to load; total usage is unavailable',
     account:'Account',pool:'Quota pool',used:'Upstream used %',at:'Observed at',reset:'Upstream reset time',state:'Observation status',old:'Reset time passed; awaiting observation',recorded:'Recorded',
@@ -22,6 +26,8 @@ const copy = {
     tokens:'Actual Tokens',usd:'USD reference',credits:'Credits reference',none:'No records',refresh:'Refresh',logout:'Sign out',
     login:'CPA management authentication',connect:'Connect',auth:'Enter a valid CPA Management Key',loading:'Loading',http:'Connect through your HTTPS management entry',
     expand:'Expand account usage',collapse:'Collapse account usage',noAccounts:'No accounts',main:'Primary',weekly:'Weekly',range:'Date range',unavailable:'No observation',
+    deleteAccount:'Delete account statistics',deleteConfirm:'Delete',cancelDelete:'Cancel',deleting:'Deleting',
+    deleteMessage:'Cumulative usage, payment records and reset ledgers will be permanently deleted. CPA login credentials are kept; later requests will start new statistics.',
     days:['Last 24 hours','Last 7 days','Last 30 days']}
 };
 const tr = name => copy[language][name];
@@ -151,6 +157,10 @@ function renderStats() {
   $('#accountsEmpty').textContent=tr('noAccounts');
   $('#accountsTitle').textContent=tr('account');
   $('#accountsCount').textContent=ledgerNumber(accountViews.size);
+  $('#deleteAccountTitle').textContent=tr('deleteAccount');
+  $('#deleteAccountMessage').textContent=tr('deleteMessage');
+  $('#cancelAccountDelete').textContent=tr('cancelDelete');
+  labeledIcon($('#confirmAccountDelete'),tr(accountDeleteBusy ? 'deleting' : 'deleteConfirm'),'trash-2');
   renderAllAccountsUsage();
   for (const view of accountViews.values()) {
     renderAccounting(view);
@@ -180,6 +190,8 @@ function renderAllAccountsUsage() {
 function renderAccountSummary(view) {
   const summary=view.root.querySelector('summary');
   summary.title=tr(view.root.open ? 'collapse' : 'expand');
+  labeledIcon(view.find('deleteAccount'),tr('deleteAccount'),'trash-2',true);
+  view.find('deleteAccount').disabled=accountDeleteBusy;
   const target=view.root.querySelector('.account-overview');
   target.replaceChildren();
   if (!view.ledgerState) {
@@ -270,6 +282,16 @@ function createAccountView(account) {
   accountViews.set(account,view);
   setupAccounting(view);
   view.find('days').onchange=() => loadModels(view);
+  view.find('deleteAccount').onclick=event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (accountDeleteBusy || view.paymentBusy || !viewIsCurrent(view)) return;
+    deletingView=view;
+    $('#deleteAccountName').textContent=account;
+    $('#deleteAccountError').textContent='';
+    $('#deleteAccountDialog').showModal();
+    $('#cancelAccountDelete').focus();
+  };
   renderAccountStats(view);
   return view;
 }
@@ -300,6 +322,7 @@ async function loadModels(view) {
 }
 
 async function load() {
+  if (accountDeleteBusy) return;
   const sequence=++loadSequence;
   overviewReady=false;
   renderAllAccountsUsage();
@@ -349,6 +372,44 @@ function initialize() {
   paintIcons(document);
   renderStats();
   $('#refresh').onclick=load;
+  $('#cancelAccountDelete').onclick=() => $('#deleteAccountDialog').close();
+  $('#deleteAccountDialog').addEventListener('cancel',event => {
+    if (accountDeleteBusy) event.preventDefault();
+  });
+  $('#deleteAccountDialog').addEventListener('close',() => { deletingView=null; });
+  $('#confirmAccountDelete').onclick=async () => {
+    const view=deletingView;
+    if (accountDeleteBusy || !view || !viewIsCurrent(view)) return;
+    accountDeleteBusy=true;
+    ++loadSequence;
+    $('#refresh').disabled=true;
+    $('#cancelAccountDelete').disabled=true;
+    $('#confirmAccountDelete').disabled=true;
+    renderStats();
+    let deleted=false;
+    try {
+      await api('/accounts',{method:'DELETE',body:JSON.stringify({account:view.account,confirm:true})});
+      deleted=true;
+      accountViews.delete(view.account);
+      view.root.remove();
+      try {
+        const saved=JSON.parse(localStorage.getItem('cqe-account-visibility') || '{}');
+        delete saved[view.account];
+        localStorage.setItem('cqe-account-visibility',JSON.stringify(saved));
+      } catch (_) {}
+      $('#deleteAccountDialog').close();
+    } catch (error) {
+      $('#deleteAccountError').textContent=error.message;
+      handleAuth(error);
+    } finally {
+      accountDeleteBusy=false;
+      $('#cancelAccountDelete').disabled=false;
+      $('#confirmAccountDelete').disabled=false;
+      $('#refresh').disabled=false;
+      renderStats();
+    }
+    if (deleted) await load();
+  };
   $('#language').onchange=() => { language=$('#language').value; renderStats(); };
   $('#logout').onclick=() => {
     ++loadSequence; key='';
